@@ -1,0 +1,103 @@
+# .cursorignore для Unity проекта
+
+# 1. Системные папки Unity (не нужны для анализа)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Mm]emoryCaptures/
+
+# 2. Кэш Package Manager и скачанные пакеты
+/[Pp]ackages/packages-lock.json
+**/[Pp]ackages/*/
+!/[Pp]ackages/manifest.json  # ОСТАВЛЯЕМ: важно для понимания зависимостей
+
+# 3. Ассеты, которые Cursor не может анализировать (бинарные/тяжелые)
+/[Aa]ssets/**/*.fbx
+/[Aa]ssets/**/*.obj
+/[Aa]ssets/**/*.blend
+/[Aa]ssets/**/*.mb
+/[Aa]ssets/**/*.ma
+/[Aa]ssets/**/*.psd
+/[Aa]ssets/**/*.png
+/[Aa]ssets/**/*.jpg
+/[Aa]ssets/**/*.jpeg
+/[Aa]ssets/**/*.tga
+/[Aa]ssets/**/*.tif
+/[Aa]ssets/**/*.tiff
+/[Aa]ssets/**/*.bmp
+/[Aa]ssets/**/*.exr
+/[Aa]ssets/**/*.wav
+/[Aa]ssets/**/*.mp3
+/[Aa]ssets/**/*.ogg
+/[Aa]ssets/**/*.aiff
+/[Aa]ssets/**/*.mp4
+/[Aa]ssets/**/*.mov
+/[Aa]ssets/**/*.fbx.meta
+/[Aa]ssets/**/*.mat  # Обычно бинарные, но можно раскомментировать если нужны
+/[Aa]ssets/**/*.anim  # Обычно бинарные
+/[Aa]ssets/**/*.controller  # Обычно бинарные
+
+# 4. Но! Исключаем не все ассеты - оставляем текстовые/конфигурационные:
+!/[Aa]ssets/**/*.cs          # СКРИПТЫ - САМОЕ ВАЖНОЕ
+!/[Aa]ssets/**/*.asmdef      # Assembly Definition - важно
+!/[Aa]ssets/**/*.asmref      # Assembly References - важно
+!/[Aa]ssets/**/*.unity       # СЦЕНЫ - текстовые, можно анализировать
+!/[Aa]ssets/**/*.prefab      # ПРЕФАБЫ - текстовые (YAML), можно анализировать
+!/[Aa]ssets/**/*.asset       # ScriptableObjects и другие ассеты (текстовые)
+!/[Aa]ssets/**/*.json        # Конфиги
+!/[Aa]ssets/**/*.txt         # Текстовые файлы
+!/[Aa]ssets/**/*.md          # Документация
+!/[Aa]ssets/**/*.xml         # Конфиги, локализация
+!/[Aa]ssets/**/*.csv         # Данные
+!/[Aa]ssets/**/*.shader      # Шейдеры
+!/[Aa]ssets/**/*.shadergraph # Shader Graph
+!/[Aa]ssets/**/*.compute     # Compute Shaders
+!/[Aa]ssets/**/*.hlsl
+!/[Aa]ssets/**/*.cginc
+
+# 5. Папки с исходниками пакетов (опционально - можно оставить для анализа)
+!/[Pp]ackages/**/*.cs
+!/[Pp]ackages/**/*.asmdef
+!/[Pp]ackages/**/*.md
+
+# 6. Настройки проекта (важные текстовые файлы)
+!/[Pp]rojectSettings/
+!/[Pp]rojectSettings/*
+# Но исключаем потенциально бинарные или личные настройки:
+[Pp]rojectSettings/EditorBuildSettings.asset
+[Pp]rojectSettings/Search.settings
+
+# 7. Прочие системные и временные файлы
+*.meta
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.mdb
+
+# 8. Временные файлы операционной системы
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 9. Файлы IDE и редакторов
+.vscode/
+.idea/
+*.sln
+*.csproj
+
+# 10. Git и другие VCS
+.git/
+.gitignore
+.gitattributes
+.gitmodules

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44c63f50aba44d83867d4d0dc653ae8d, type: 3}
+  m_Name: PlayerStatLevelConfigSet
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Gameplay.Player.PlayerStats.PlayerStatLevelConfigsSet
+  configs:
+  - {fileID: 11400000, guid: be3584e3b813968448dd2b031352666e, type: 2}
+  - {fileID: 11400000, guid: 47341d4035d62c54b991e6b4aadb4b28, type: 2}
+  - {fileID: 11400000, guid: 7d5f789ec83c9e849b49653fc93a0608, type: 2}

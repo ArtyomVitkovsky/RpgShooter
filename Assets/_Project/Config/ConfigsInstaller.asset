@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f51541f894ac46a7a5198cf928f92761, type: 3}
+  m_Name: ConfigsInstaller
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Config.PlayerConfig.ConfigsInstaller
+  playerMovementConfig: {fileID: 11400000, guid: 3b0e38698514f1444b37d6035975fba7, type: 2}
+  playerStatLevelConfigsSet: {fileID: 11400000, guid: 67a06f7fcacb8c945bd2ebf96b03edcd, type: 2}
