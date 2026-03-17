@@ -16,3 +16,21 @@ MonoBehaviour:
   levels:
   - Level: 1
     Value: 100
+  - Level: 2
+    Value: 120
+  - Level: 3
+    Value: 130
+  - Level: 4
+    Value: 140
+  - Level: 5
+    Value: 150
+  - Level: 6
+    Value: 160
+  - Level: 7
+    Value: 170
+  - Level: 8
+    Value: 180
+  - Level: 9
+    Value: 190
+  - Level: 10
+    Value: 200

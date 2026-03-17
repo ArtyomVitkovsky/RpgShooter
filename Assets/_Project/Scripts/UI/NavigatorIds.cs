@@ -8,5 +8,6 @@
         public const string QueueScreensNavigator = "PopupScreensNavigator";
         
         public const string GamePlayScreensNavigator = "GamePlayScreensNavigator";
+        public const string GamePlayAdditionalScreensNavigator = "GamePlayAdditionalScreensNavigator";
     }
 }

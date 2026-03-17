@@ -61,7 +61,7 @@ namespace _Project.Scripts.Gameplay.Player.Health
                 return;
             }
 
-            var maxFromStats = _playerStatsService.GetStatValue(PlayerStatType.Health);
+            var maxFromStats = _playerStatsService.GetStatValue(CharacterStatType.Health);
             _maxHealth.Value = maxFromStats > 0 ? maxFromStats : 0f;
 
             if (CurrentHealth > MaxHealth)

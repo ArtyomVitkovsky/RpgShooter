@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Config.PlayerConfig.ConfigsInstaller
   playerMovementConfig: {fileID: 11400000, guid: 3b0e38698514f1444b37d6035975fba7, type: 2}
   playerStatLevelConfigsSet: {fileID: 11400000, guid: 67a06f7fcacb8c945bd2ebf96b03edcd, type: 2}
+  enemyStatConfig: {fileID: 11400000, guid: c1c976ace9ff58d45bed5b50fd199bed, type: 2}

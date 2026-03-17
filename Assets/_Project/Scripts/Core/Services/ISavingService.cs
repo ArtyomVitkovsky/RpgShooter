@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using Zenject;
 
 namespace _Project.Scripts.Core.Services
@@ -25,10 +26,15 @@ namespace _Project.Scripts.Core.Services
     }
     
     public class PlayerPrefsSavingService : ISavingService
-    {
+    { 
+        [Serializable]
+        private class SaveData<T> { public T value; }
+
         public void Save<T>(string key, T data)
         {
-            string json = JsonUtility.ToJson(data);
+            var wrapper = new SaveData<T> { value = data };
+            var json = JsonUtility.ToJson(wrapper);
+    
             PlayerPrefs.SetString(key, json);
             PlayerPrefs.Save();
         }
@@ -39,14 +45,13 @@ namespace _Project.Scripts.Core.Services
             {
                 return defaultValue;
             }
-
-            string json = PlayerPrefs.GetString(key);
-        
+            
             try
             {
-                return JsonUtility.FromJson<T>(json);
+                var json = PlayerPrefs.GetString(key);
+                return JsonUtility.FromJson<SaveData<T>>(json).value;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError($"Failed to load data for key {key}: {ex.Message}");
                 return defaultValue;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -21,6 +21,7 @@ namespace _Project.Scripts.Gameplay.Player
         public Action OnSprintAction;
         public Action OnPreviousAction;
         public Action OnNextAction;
+        public Action OnKButtonPressedAction;
 
         #endregion
 
@@ -36,6 +37,8 @@ namespace _Project.Scripts.Gameplay.Player
         public bool Sprint { get; private set; }
         public bool ToPrevious { get; private set; }
         public bool ToNext { get; private set; }
+
+        public bool K_ButtonPressed { get; private set; }
 
         #endregion
        
@@ -55,7 +58,11 @@ namespace _Project.Scripts.Gameplay.Player
         public void OnAttack(InputAction.CallbackContext context)
         {
             Attack = context.started || context.performed;
-            OnAttackAction?.Invoke();
+
+            if (context.started)
+            {
+                OnAttackAction?.Invoke();
+            }
         }
 
         public void OnInteract(InputAction.CallbackContext context)
@@ -80,6 +87,16 @@ namespace _Project.Scripts.Gameplay.Player
         public void OnSprint(InputAction.CallbackContext context)
         {
             Sprint = context.started || context.performed;
+        }
+
+        public void OnK(InputAction.CallbackContext context)
+        {
+            K_ButtonPressed = context.started;
+
+            if (context.started)
+            {
+                OnKButtonPressedAction?.Invoke();
+            }
         }
 
         public void OnAim(InputAction.CallbackContext context)

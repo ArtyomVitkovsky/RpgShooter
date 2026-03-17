@@ -1,15 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using _Project.Scripts.Core.Services;
 using UnityEngine;
 
 namespace _Project.Scripts.Gameplay.Player.PlayerStats
 {
     [CreateAssetMenu(menuName = "Configs/Player Stat Level Config Set", fileName = "PlayerStatLevelConfigSet")]
-    public class PlayerStatLevelConfigsSet : ScriptableObject
+    public class PlayerStatLevelConfigsSet : ScriptableObject, IConfig<CharacterStatType, PlayerStatLevelConfig>
     {
         [SerializeField] private List<PlayerStatLevelConfig> configs;
 
-        public PlayerStatLevelConfig GetConfig(PlayerStatType type)
+        public PlayerStatLevelConfig GetConfig(CharacterStatType type)
         {
             var config = configs.FirstOrDefault(c => c.Type == type);
 

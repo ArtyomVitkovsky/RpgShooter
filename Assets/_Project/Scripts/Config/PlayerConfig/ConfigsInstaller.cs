@@ -1,4 +1,5 @@
-﻿using _Project.Scripts.Gameplay.Player.PlayerStats;
+using _Project.Scripts.Core.Services;
+using _Project.Scripts.Gameplay.Player.PlayerStats;
 using UnityEngine;
 using Zenject;
 
@@ -9,11 +10,17 @@ namespace _Project.Scripts.Config.PlayerConfig
     {
         [SerializeField] private PlayerMovementConfig playerMovementConfig;
         [SerializeField] private PlayerStatLevelConfigsSet playerStatLevelConfigsSet;
+        [SerializeField] private Gameplay.Enemy.EnemyStatConfig enemyStatConfig;
         
         public override void InstallBindings()
         {
             Container.BindInstance(playerMovementConfig);
-            Container.BindInstance(playerStatLevelConfigsSet);
+            Container
+                .Bind<IConfig<CharacterStatType, PlayerStatLevelConfig>>()
+                .FromInstance(playerStatLevelConfigsSet);
+            Container
+                .Bind<IConfig<CharacterStatType, float>>()
+                .FromInstance(enemyStatConfig);
         }
     }
 }

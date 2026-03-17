@@ -5,7 +5,7 @@ using Zenject;
 
 namespace _Project.Scripts.Gameplay.Player.PlayerStats
 {
-    public enum PlayerStatType
+    public enum CharacterStatType
     {
         Health = 0,
         Speed = 1,
@@ -13,9 +13,9 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
     }
     
     [Serializable]
-    public struct PlayerStatData
+    public struct CharacterStatData
     {
-        public PlayerStatType Type;
+        public CharacterStatType Type;
         public int CurrentLevel;
         public float Value;
     }
@@ -24,13 +24,21 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
     {
         public void Bootstrap();
         
-        public PlayerStatData GetStat(PlayerStatType type);
+        public CharacterStatData GetStat(CharacterStatType type);
+
+        public CharacterStatData[] GetAllStats();
         
-        public float GetStatValue(PlayerStatType type);
+        public int GetAvailableSkillPoints();
         
-        public PlayerStatData IncreaseStatLevel(PlayerStatType type);
+        public void AddSkillPoints(int amount);
         
-        public PlayerStatData DecreaseStatLevel(PlayerStatType type);
+        public float GetStatValue(CharacterStatType type);
+        
+        public CharacterStatData IncreaseStatLevel(CharacterStatType type);
+        
+        public CharacterStatData DecreaseStatLevel(CharacterStatType type);
+
+        public void RestoreStats(CharacterStatData[] stats, int availableSkillPoints);
     }
 
     public class PlayerStatsServiceInstaller : Installer<PlayerStatsServiceInstaller>
@@ -44,27 +52,35 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
     public class PlayerStatsService : IPlayerStatsService
     {
         private const string StatSaveKeyPrefix = "PlayerStat_";
+        private const string SkillPointsSaveKey = "Player_SkillPoints";
         
         [Inject] private ISavingService savingService;
         [Inject] private IConfigService configService;
 
-        private List<PlayerStatData> playerStatsData;
-        private Dictionary<PlayerStatType, float> playerStatsDataValues;
+        private List<CharacterStatData> playerStatsData;
+        private Dictionary<CharacterStatType, float> playerStatsDataValues;
+        private int _availableSkillPoints;
         
         public void Bootstrap()
         {
-            playerStatsData = new List<PlayerStatData>();
-            playerStatsDataValues = new Dictionary<PlayerStatType, float>();
+            playerStatsData = new List<CharacterStatData>();
+            playerStatsDataValues = new Dictionary<CharacterStatType, float>();
 
-            foreach (PlayerStatType type in Enum.GetValues(typeof(PlayerStatType)))
+            _availableSkillPoints = 0;
+            if (savingService.HasKey(SkillPointsSaveKey))
+            {
+                _availableSkillPoints = savingService.Load<int>(SkillPointsSaveKey);
+            }
+
+            foreach (CharacterStatType type in Enum.GetValues(typeof(CharacterStatType)))
             {
                 string key = GetSaveKey(type);
 
-                PlayerStatData data;
+                CharacterStatData data;
 
                 if (savingService.HasKey(key))
                 {
-                    data = savingService.Load<PlayerStatData>(key);
+                    data = savingService.Load<CharacterStatData>(key);
                 }
                 else
                 {
@@ -78,7 +94,37 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
             }
         }
 
-        public PlayerStatData GetStat(PlayerStatType type)
+        public int GetAvailableSkillPoints()
+        {
+            return _availableSkillPoints;
+        }
+
+        public CharacterStatData[] GetAllStats()
+        {
+            if (playerStatsData == null)
+            {
+                return Array.Empty<CharacterStatData>();
+            }
+
+            return playerStatsData.ToArray();
+        }
+
+        public void AddSkillPoints(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            _availableSkillPoints += amount;
+
+            if (savingService != null)
+            {
+                savingService.Save(SkillPointsSaveKey, _availableSkillPoints);
+            }
+        }
+
+        public CharacterStatData GetStat(CharacterStatType type)
         {
             int index = GetStatIndex(type);
             if (index < 0)
@@ -96,7 +142,38 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
             return data;
         }
 
-        public float GetStatValue(PlayerStatType type)
+        public void RestoreStats(CharacterStatData[] stats, int availableSkillPoints)
+        {
+            if (stats == null)
+            {
+                return;
+            }
+
+            playerStatsData = new List<CharacterStatData>(stats.Length);
+            playerStatsDataValues = new Dictionary<CharacterStatType, float>(stats.Length);
+
+            foreach (var stat in stats)
+            {
+                var data = stat;
+                UpdateValueFromConfig(ref data);
+
+                playerStatsData.Add(data);
+                playerStatsDataValues[data.Type] = data.Value;
+
+                if (savingService != null)
+                {
+                    savingService.Save(GetSaveKey(data.Type), data);
+                }
+            }
+
+            _availableSkillPoints = availableSkillPoints;
+            if (savingService != null)
+            {
+                savingService.Save(SkillPointsSaveKey, _availableSkillPoints);
+            }
+        }
+
+        public float GetStatValue(CharacterStatType type)
         {
             if (playerStatsDataValues != null && playerStatsDataValues.TryGetValue(type, out float value))
             {
@@ -108,7 +185,7 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
             return data.Value;
         }
 
-        public PlayerStatData IncreaseStatLevel(PlayerStatType type)
+        public CharacterStatData IncreaseStatLevel(CharacterStatType type)
         {
             int index = GetStatIndex(type);
             if (index < 0)
@@ -116,6 +193,11 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
                 var defaultData = GetDefaultStatData(type);
                 UpdateValueFromConfig(ref defaultData);
                 return defaultData;
+            }
+
+            if (_availableSkillPoints <= 0)
+            {
+                return playerStatsData[index];
             }
 
             var data = playerStatsData[index];
@@ -126,12 +208,18 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
             playerStatsData[index] = data;
             playerStatsDataValues[type] = data.Value;
 
+            _availableSkillPoints--;
+            if (savingService != null)
+            {
+                savingService.Save(SkillPointsSaveKey, _availableSkillPoints);
+            }
+
             savingService.Save(GetSaveKey(type), data);
 
             return data;
         }
 
-        public PlayerStatData DecreaseStatLevel(PlayerStatType type)
+        public CharacterStatData DecreaseStatLevel(CharacterStatType type)
         {
             int index = GetStatIndex(type);
             if (index < 0)
@@ -157,7 +245,7 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
             return data;
         }
 
-        private int GetStatIndex(PlayerStatType type)
+        private int GetStatIndex(CharacterStatType type)
         {
             if (playerStatsData == null)
             {
@@ -167,16 +255,16 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
             return playerStatsData.FindIndex(s => s.Type == type);
         }
 
-        private PlayerStatData GetDefaultStatData(PlayerStatType type)
+        private CharacterStatData GetDefaultStatData(CharacterStatType type)
         {
             if (configService != null)
             {
-                var config = configService.GetPlayerStatLevelConfig(type);
+                var config = configService.GetConfig<CharacterStatType, PlayerStatLevelConfig>(type);
                 if (config != null)
                 {
                     var levelData = config.GetLevelData(0);
 
-                    return new PlayerStatData()
+                    return new CharacterStatData()
                     {
                         Type = type,
                         CurrentLevel = 1,
@@ -185,7 +273,7 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
                 }
             }
 
-            return new PlayerStatData
+            return new CharacterStatData
             {
                 Type = type,
                 CurrentLevel = 1,
@@ -193,19 +281,19 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
             };
         }
 
-        private static string GetSaveKey(PlayerStatType type)
+        private static string GetSaveKey(CharacterStatType type)
         {
             return $"{StatSaveKeyPrefix}{type}";
         }
 
-        private void UpdateValueFromConfig(ref PlayerStatData data)
+        private void UpdateValueFromConfig(ref CharacterStatData data)
         {
             if (configService == null)
             {
                 return;
             }
 
-            var config = configService.GetPlayerStatLevelConfig(data.Type);
+            var config = configService.GetConfig<CharacterStatType, PlayerStatLevelConfig>(data.Type);
             if (config == null)
             {
                 return;

@@ -11,6 +11,7 @@ namespace _Project.Scripts.Gameplay.Player.Movement
         [Inject] private IInputService _inputService;
         [Inject] private PlayerMovementConfig _settings;
         [Inject] private IPlayerStatsService _playerStatsService;
+        [Inject(Optional = true)] private SignalBus _signalBus;
 
         [Inject(Id = PlayerCharacterInstaller.PLAYER_RIGIDBODY)]
         private Rigidbody _rb;
@@ -22,6 +23,7 @@ namespace _Project.Scripts.Gameplay.Player.Movement
         private Transform _cameraHolder;
 
         private PlayerActionsProvider _actions;
+        private bool _isMovementEnabled = true;
 
         private float _verticalRotation = 0f;
         private bool _isGrounded;
@@ -38,17 +40,46 @@ namespace _Project.Scripts.Gameplay.Player.Movement
             _rb.useGravity = true;
 
             _actions = _inputService.GetActionsProvider();
+
+            if (_signalBus != null)
+            {
+                _signalBus.Subscribe<PlayerStatsScreenOpenedSignal>(HandleStatsScreenOpened);
+                _signalBus.Subscribe<PlayerStatsScreenClosedSignal>(HandleStatsScreenClosed);
+            }
+            
+#if !UNITY_ANDROID && !UNITY_IPHONE
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+#endif
+        }
+
+        private void HandleStatsScreenOpened(PlayerStatsScreenOpenedSignal signal)
+        {
+            SetMovementEnabled(false);
+        }
+
+        private void HandleStatsScreenClosed(PlayerStatsScreenClosedSignal signal)
+        {
+            SetMovementEnabled(true);
         }
 
         public void Tick()
         {
+            if (!_isMovementEnabled)
+            {
+                return;
+            }
+
             HandleLook();
         }
 
         public void FixedTick()
         {
+            if (!_isMovementEnabled)
+            {
+                return;
+            }
+
             CheckGrounded();
             HandleJump();
             HandleMovement();
@@ -56,6 +87,16 @@ namespace _Project.Scripts.Gameplay.Player.Movement
             _jumpTimer += Time.fixedDeltaTime;
 
             _rb.linearDamping = _isGrounded ? _settings.LinearDamping : 0.05f;
+        }
+
+        public void SetMovementEnabled(bool enabled)
+        {
+            _isMovementEnabled = enabled;
+
+            if (!enabled)
+            {
+                _rb.linearVelocity = Vector3.zero;
+            }
         }
 
         private void CheckGrounded()
@@ -105,7 +146,7 @@ namespace _Project.Scripts.Gameplay.Player.Movement
             var speedMultiplier = 1f;
             if (_playerStatsService != null)
             {
-                speedMultiplier = _playerStatsService.GetStatValue(PlayerStatType.Speed);
+                speedMultiplier = _playerStatsService.GetStatValue(CharacterStatType.Speed);
             }
 
             var targetSpeed = baseTargetSpeed * speedMultiplier;

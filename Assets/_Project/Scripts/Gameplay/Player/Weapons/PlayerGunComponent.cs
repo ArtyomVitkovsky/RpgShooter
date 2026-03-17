@@ -1,4 +1,5 @@
 using _Project.Scripts.Core.Services;
+using _Project.Scripts.Gameplay.Enemy;
 using _Project.Scripts.Gameplay.Encounter;
 using _Project.Scripts.Gameplay.Player.PlayerStats;
 using UnityEngine;
@@ -10,14 +11,16 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
     {
         [Inject] private IInputService _inputService;
         [Inject] private IPlayerStatsService _playerStatsService;
+        [Inject(Optional = true)] private SignalBus _signalBus;
 
-        [Inject(Id = PlayerCharacterInstaller.CAMERA_HOLDER)]
+        [Inject(Id = PlayerCharacterInstaller.MUZZLE_TRANSFORM)]
         private Transform _muzzleTransform;
 
         private PlayerActionsProvider _actions;
         private float _cooldown;
+        private bool _attackRequested;
 
-        private readonly float _fireRate = 10f; // shots per second
+        private readonly float _fireRate = 10f;
         private readonly float _maxDistance = 100f;
         private readonly float _spreadAngle = 1.0f;
         private readonly LayerMask _hitLayers = ~0;
@@ -25,6 +28,10 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
         public void Initialize()
         {
             _actions = _inputService.GetActionsProvider();
+            if (_actions != null)
+            {
+                _actions.OnAttackAction += HandleAttackRequested;
+            }
         }
 
         public void Tick()
@@ -36,10 +43,16 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
 
             _cooldown -= Time.deltaTime;
 
-            if (_actions.Attack && _cooldown <= 0f)
+            if (_attackRequested && _cooldown <= 0f)
             {
                 Shoot();
+                _attackRequested = false;
             }
+        }
+
+        private void HandleAttackRequested()
+        {
+            _attackRequested = true;
         }
 
         private void Shoot()
@@ -54,7 +67,7 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
             var damage = 10f;
             if (_playerStatsService != null)
             {
-                damage = _playerStatsService.GetStatValue(PlayerStatType.Damage);
+                damage = _playerStatsService.GetStatValue(CharacterStatType.Damage);
             }
 
             var direction = _muzzleTransform.forward;
@@ -77,6 +90,12 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
             if (damageable != null && damageable.IsAlive)
             {
                 damageable.TakeDamage(damage);
+
+                // Only show hit marker for enemies.
+                if (_signalBus != null && hitInfo.collider.GetComponentInParent<EnemyCharacter>() != null)
+                {
+                    _signalBus.TryFire(new PlayerHitEnemySignal(hitInfo.point, damage));
+                }
             }
         }
     }

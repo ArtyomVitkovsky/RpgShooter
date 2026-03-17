@@ -15,11 +15,11 @@ namespace _Project.Scripts.Gameplay.Player.PlayerStats
     [CreateAssetMenu(menuName = "Configs/Player Stat Level Config", fileName = "PlayerStatLevelConfig")]
     public class PlayerStatLevelConfig : ScriptableObject
     {
-        [SerializeField] private PlayerStatType type;
+        [SerializeField] private CharacterStatType type;
 
         [SerializeField] private List<PlayerStatLevelData> levels;
 
-        public PlayerStatType Type => type;
+        public CharacterStatType Type => type;
 
         public PlayerStatLevelData GetLevelData(int requestedLevel)
         {
