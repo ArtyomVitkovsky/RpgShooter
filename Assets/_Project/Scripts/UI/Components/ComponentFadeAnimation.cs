@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Sirenix.OdinInspector;
@@ -44,6 +44,8 @@ public class ComponentFadeAnimation : MonoBehaviour
     
     private float _currentNormalizedTime = 0f;
 
+    private UniTask _animationQueue = UniTask.CompletedTask;
+
     [Button]
     public void GenerateCurves()
     {
@@ -58,13 +60,13 @@ public class ComponentFadeAnimation : MonoBehaviour
     [Button]
     private void PlayIN()
     {
-        PlayAnimation();
+        PlayAnimation().Forget();
     }
     
     [Button]
     private void PlayOUT()
     {
-        PlayBackwardsAnimation();
+        PlayBackwardsAnimation().Forget();
     }
     
     private AnimationCurve CreateCurveFromSetup(KeyFrameSetup[] setups)
@@ -126,20 +128,35 @@ public class ComponentFadeAnimation : MonoBehaviour
         }
     }
 
-    public virtual async UniTask PlayAnimation()
+    public virtual UniTask PlayAnimation()
     {
-        cts?.Cancel();
-        cts = new CancellationTokenSource();
-
-        await ProcessAnimation(cts.Token, false);
+        var tcs = new UniTaskCompletionSource();
+        _animationQueue = EnqueueAnimationInternal(_animationQueue, false, tcs);
+        return tcs.Task;
     }
 
-    public virtual async UniTask PlayBackwardsAnimation()
+    public virtual UniTask PlayBackwardsAnimation()
     {
+        var tcs = new UniTaskCompletionSource();
+        _animationQueue = EnqueueAnimationInternal(_animationQueue, true, tcs);
+        return tcs.Task;
+    }
+
+    private async UniTask EnqueueAnimationInternal(UniTask previousQueue, bool backwards, UniTaskCompletionSource tcs)
+    {
+        try
+        {
+            await previousQueue;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
         cts?.Cancel();
         cts = new CancellationTokenSource();
 
-        await ProcessAnimation(cts.Token, true);
+        await ProcessAnimation(cts.Token, backwards);
+        tcs.TrySetResult();
     }
 
     protected virtual async UniTask ProcessAnimation(CancellationToken token, bool backwards)

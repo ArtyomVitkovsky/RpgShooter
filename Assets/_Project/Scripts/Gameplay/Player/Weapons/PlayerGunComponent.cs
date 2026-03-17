@@ -21,8 +21,7 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
         private bool _attackRequested;
 
         private readonly float _fireRate = 10f;
-        private readonly float _maxDistance = 100f;
-        private readonly float _spreadAngle = 1.0f;
+        private readonly float _maxDistance = 10000f;
         private readonly LayerMask _hitLayers = ~0;
 
         public void Initialize()
@@ -71,16 +70,9 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
             }
 
             var direction = _muzzleTransform.forward;
-
-            if (_spreadAngle > 0f)
-            {
-                var spread = Random.insideUnitCircle * _spreadAngle;
-                var spreadRotation = Quaternion.Euler(spread.y, spread.x, 0f);
-                direction = spreadRotation * direction;
-            }
-
             var ray = new Ray(_muzzleTransform.position, direction);
 
+            Debug.DrawRay(ray.origin, ray.direction * _maxDistance, Color.red);
             if (!Physics.Raycast(ray, out var hitInfo, _maxDistance, _hitLayers, QueryTriggerInteraction.Ignore))
             {
                 return;
@@ -91,7 +83,6 @@ namespace _Project.Scripts.Gameplay.Player.Weapons
             {
                 damageable.TakeDamage(damage);
 
-                // Only show hit marker for enemies.
                 if (_signalBus != null && hitInfo.collider.GetComponentInParent<EnemyCharacter>() != null)
                 {
                     _signalBus.TryFire(new PlayerHitEnemySignal(hitInfo.point, damage));

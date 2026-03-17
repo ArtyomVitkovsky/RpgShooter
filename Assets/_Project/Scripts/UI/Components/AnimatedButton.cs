@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UniRx;
@@ -20,6 +20,9 @@ public class AnimatedButton : MonoBehaviour,
     protected bool isPointerOnButton;
     protected bool _isSelected;
 
+    private int activePointerId = -1;
+    private HashSet<int> pointersInside = new HashSet<int>();
+
     private void OnValidate()
     {
         if (!TryGetComponent(out CanvasGroup currentCanvasGroup))
@@ -32,11 +35,16 @@ public class AnimatedButton : MonoBehaviour,
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (!canvasGroup.interactable || _isSelected)
+        Debug.Log($"AnimatedButton OnPointer Down {eventData.pointerId}");
+        
+        if (!canvasGroup.interactable || _isSelected || activePointerId != -1)
         {
             return;
         }
 
+        eventData.Use();
+        activePointerId = eventData.pointerId;
+        
         foreach (var scaleAnimation in scaleAnimations)
         {
             scaleAnimation.PlayAnimation();
@@ -50,43 +58,48 @@ public class AnimatedButton : MonoBehaviour,
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (!canvasGroup.interactable)
+        Debug.Log($"AnimatedButton OnPointer Up {eventData.pointerId}");
+        if (eventData.pointerId == activePointerId || eventData.pointerPress == gameObject)
         {
-            return;
-        }
+            activePointerId = -1;
 
-        if (!isPointerOnButton || eventData.dragging)
-        {
-            foreach (var scaleAnimation in scaleAnimations)
+            var current = eventData.pointerCurrentRaycast.gameObject;
+            bool isOverButton = current != null &&
+                                (current == gameObject || current.transform.IsChildOf(transform));
+
+            if (!isOverButton)
             {
-                scaleAnimation.PlayBackwardsAnimation();
+                ResetVisuals();
+                return;
             }
 
-            if (!_isSelected)
-            {
-                foreach (var fadeAnimation in fadeAnimations)
-                {
-                    fadeAnimation.PlayBackwardsAnimation();
-                }
-            }
-
-            return;
+            ProcessButtonClick().Forget();
         }
-
-        ProcessButtonClick();
+    }
+    
+    private void ResetVisuals()
+    {
+        foreach (var scaleAnimation in scaleAnimations)
+        {
+            scaleAnimation.PlayBackwardsAnimation();
+        }
+        if (!_isSelected)
+        {
+            foreach (var fadeAnimation in fadeAnimations)
+            {
+                fadeAnimation.PlayBackwardsAnimation();
+            }
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        pointersInside.Add(eventData.pointerId);
+        
         isPointerOnButton = true;
 
-        if (!canvasGroup.interactable) return;
+        if (!canvasGroup.interactable || _isSelected) return;
 
-        if (_isSelected)
-        {
-            return;
-        }
-        
         foreach (var fadeAnimation in fadeAnimations)
         {
             fadeAnimation.PlayAnimation();
@@ -95,16 +108,23 @@ public class AnimatedButton : MonoBehaviour,
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        isPointerOnButton = false;
+        pointersInside.Remove(eventData.pointerId);
+        if (pointersInside.Count == 0)
+        {
+            isPointerOnButton = false;
+        }
 
         if (!canvasGroup.interactable || _isSelected)
         {
             return;
         }
         
-        foreach (var fadeAnimation in fadeAnimations)
+        if (pointersInside.Count == 0)
         {
-            fadeAnimation.PlayBackwardsAnimation();
+            foreach (var fadeAnimation in fadeAnimations)
+            {
+                fadeAnimation.PlayBackwardsAnimation();
+            }
         }
     }
 

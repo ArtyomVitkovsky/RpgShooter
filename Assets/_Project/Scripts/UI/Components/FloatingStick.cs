@@ -3,65 +3,82 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.Layouts;
 using UnityEngine.InputSystem.OnScreen;
 
-namespace _Project.Scripts.UI.Components
+public class FloatingStick : OnScreenControl, IPointerDownHandler, IDragHandler, IPointerUpHandler, IPointerExitHandler
 {
-    public class FloatingStick : OnScreenControl, IPointerDownHandler, IDragHandler, IPointerUpHandler
+    [InputControl(layout = "Vector2")] [SerializeField] private string _controlPath;
+    [SerializeField] private RectTransform container;
+    [SerializeField] private RectTransform handle;
+    [SerializeField] private float movementRange = 50f;
+
+    private RectTransform _areaRect;
+    private Vector2 _initialAnchoredPos;
+    private int _activePointerId = -1; 
+
+    protected override string controlPathInternal { get => _controlPath; set => _controlPath = value; }
+
+    void Awake()
     {
-        [InputControl(layout = "Vector2")] [SerializeField]
-        private string _controlPath;
+        _areaRect = GetComponent<RectTransform>();
+        _initialAnchoredPos = container.anchoredPosition;
+    }
 
-        [SerializeField] private RectTransform container;
-        [SerializeField] private RectTransform handle;
-        [SerializeField] private float movementRange = 50f;
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        ResetStick();
+    }
 
-        private RectTransform _areaRect;
-        private Vector2 _initialAnchoredPos;
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (_activePointerId != -1) return;
 
-        protected override string controlPathInternal
+        _activePointerId = eventData.pointerId;
+        eventData.useDragThreshold = false; 
+
+        container.gameObject.SetActive(true);
+        UpdateJoystick(eventData);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (eventData.pointerId != _activePointerId) return;
+        UpdateJoystick(eventData);
+    }
+
+    private void UpdateJoystick(PointerEventData eventData)
+    {
+        if (eventData.pointerEnter == gameObject && container.anchoredPosition == _initialAnchoredPos)
         {
-            get => _controlPath;
-            set => _controlPath = value;
-        }
-
-        void Awake()
-        {
-            _areaRect = GetComponent<RectTransform>();
-            _initialAnchoredPos = container.anchoredPosition;
-        }
-
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            container.gameObject.SetActive(true);
-
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _areaRect, 
-                eventData.position, 
-                eventData.pressEventCamera, 
-                out Vector2 localPos);
-
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_areaRect, eventData.position, eventData.pressEventCamera, out Vector2 localPos);
             container.anchoredPosition = localPos;
-            handle.anchoredPosition = Vector2.zero;
         }
 
-        public void OnDrag(PointerEventData eventData)
-        {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                container, 
-                eventData.position, 
-                eventData.pressEventCamera, 
-                out Vector2 handlePos);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(container, eventData.position, eventData.pressEventCamera, out Vector2 handlePos);
+        Vector2 clampedPos = Vector2.ClampMagnitude(handlePos, movementRange);
+        handle.anchoredPosition = clampedPos;
 
-            Vector2 clampedPos = Vector2.ClampMagnitude(handlePos, movementRange);
-            handle.anchoredPosition = clampedPos;
+        SendValueToControl(clampedPos / movementRange);
+    }
 
-            SendValueToControl(clampedPos / movementRange);
-        }
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (eventData.pointerId != _activePointerId) return;
 
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            SendValueToControl(Vector2.zero);
-            handle.anchoredPosition = Vector2.zero;
-            container.anchoredPosition = _initialAnchoredPos;
-        }
+        ResetStick();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (eventData.pointerId != _activePointerId) return;
+
+        ResetStick();
+    }
+
+    private void ResetStick()
+    {
+        _activePointerId = -1;
+        SendValueToControl(Vector2.zero);
+        handle.anchoredPosition = Vector2.zero;
+        container.anchoredPosition = _initialAnchoredPos;
     }
 }

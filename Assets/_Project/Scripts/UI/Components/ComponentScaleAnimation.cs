@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Sirenix.OdinInspector;
@@ -90,9 +90,11 @@ public class ComponentScaleAnimation : MonoBehaviour
     [FoldoutGroup("Separate Axes OUT/Auto Setup")]
     [SerializeField] private KeyFrameSetup[] keyFrameSetupsZOut;
 
-
+    
     protected CancellationTokenSource cts;
     protected Vector3 initialScale;
+
+    private UniTask _animationQueue = UniTask.CompletedTask;
 
     [Button]
     public void GenerateCurves()
@@ -152,20 +154,35 @@ public class ComponentScaleAnimation : MonoBehaviour
         initialScale = targetTransform.localScale;
     }
 
-    public virtual async UniTask PlayAnimation()
+    public virtual UniTask PlayAnimation()
     {
-        cts?.Cancel();
-        cts = new CancellationTokenSource();
-
-        await ProcessAnimation(cts.Token, false);
+        var tcs = new UniTaskCompletionSource();
+        _animationQueue = EnqueueAnimationInternal(_animationQueue, false, tcs);
+        return tcs.Task;
     }
     
-    public virtual async UniTask PlayBackwardsAnimation()
+    public virtual UniTask PlayBackwardsAnimation()
     {
+        var tcs = new UniTaskCompletionSource();
+        _animationQueue = EnqueueAnimationInternal(_animationQueue, true, tcs);
+        return tcs.Task;
+    }
+
+    private async UniTask EnqueueAnimationInternal(UniTask previousQueue, bool backwards, UniTaskCompletionSource tcs)
+    {
+        try
+        {
+            await previousQueue;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
         cts?.Cancel();
         cts = new CancellationTokenSource();
 
-        await ProcessAnimation(cts.Token, true);
+        await ProcessAnimation(cts.Token, backwards);
+        tcs.TrySetResult();
     }
 
     public virtual void StopAnimation()
