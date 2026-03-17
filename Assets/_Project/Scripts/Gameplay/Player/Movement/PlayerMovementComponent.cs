@@ -86,7 +86,7 @@ namespace _Project.Scripts.Gameplay.Player.Movement
 
             _jumpTimer += Time.fixedDeltaTime;
 
-            _rb.linearDamping = _isGrounded ? _settings.LinearDamping : 0.05f;
+            _rb.drag = _isGrounded ? _settings.LinearDamping : 0.05f;
         }
 
         public void SetMovementEnabled(bool enabled)
@@ -95,7 +95,7 @@ namespace _Project.Scripts.Gameplay.Player.Movement
 
             if (!enabled)
             {
-                _rb.linearVelocity = Vector3.zero;
+                _rb.velocity = Vector3.zero;
             }
         }
 
@@ -156,7 +156,7 @@ namespace _Project.Scripts.Gameplay.Player.Movement
                 var slopeDir = Vector3.ProjectOnPlane(moveDir, _slopeHit.normal).normalized;
 
                 var targetVelocity = slopeDir * targetSpeed;
-                var currentVelocity = _rb.linearVelocity;
+                var currentVelocity = _rb.velocity;
 
                 var accel = (moveInput.sqrMagnitude > 0.01f) ? _settings.Acceleration : _settings.Deceleration;
 
@@ -173,11 +173,11 @@ namespace _Project.Scripts.Gameplay.Player.Movement
             {
                 _rb.AddForce(moveDir * targetSpeed * _settings.AirControlMultiplier, ForceMode.Acceleration);
 
-                var horizontalVel = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
+                var horizontalVel = new Vector3(_rb.velocity.x, 0, _rb.velocity.z);
                 if (horizontalVel.magnitude > targetSpeed)
                 {
                     horizontalVel = horizontalVel.normalized * targetSpeed;
-                    _rb.linearVelocity = new Vector3(horizontalVel.x, _rb.linearVelocity.y, horizontalVel.z);
+                    _rb.velocity = new Vector3(horizontalVel.x, _rb.velocity.y, horizontalVel.z);
                 }
             }
         }
@@ -201,7 +201,7 @@ namespace _Project.Scripts.Gameplay.Player.Movement
                 {
                     _jumpTimer = 0f;
 
-                    _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+                    _rb.velocity = new Vector3(_rb.velocity.x, 0f, _rb.velocity.z);
                     _rb.AddForce(Vector3.up * _settings.JumpForce, ForceMode.Impulse);
                 }
             }
